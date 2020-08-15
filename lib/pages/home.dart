@@ -1,13 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttershare/pages/activity_feed.dart';
+import 'package:fluttershare/pages/create_account.dart';
 import 'package:fluttershare/pages/profile.dart';
 import 'package:fluttershare/pages/search.dart';
-import 'package:fluttershare/pages/timeline.dart';
 import 'package:fluttershare/pages/upload.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 final GoogleSignIn googleSignIn = GoogleSignIn();
+final usersRef = Firestore.instance.collection("users");
+final DateTime timeStamp = DateTime.now();
 
 class Home extends StatefulWidget {
   @override
@@ -22,8 +25,10 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     pageController = PageController();
-
+    //just adding listner to auth change... only called when auth changes...
     googleSignIn.onCurrentUserChanged.listen(checkAuth, onError: errorOccured);
+    // signin silently is will have the previous login details and pass it to check auth..
+    // if exist isAuth becomes true and user is sent in
     googleSignIn
         .signInSilently(suppressErrors: false)
         .then(checkAuth)
@@ -48,8 +53,9 @@ class _HomeState extends State<Home> {
   }
 
   checkAuth(account) {
+    print("checkauth...");
     if (account != null) {
-      print(account);
+      checkUserInFirestore();
       setState(() {
         isAuth = true;
       });
@@ -59,6 +65,25 @@ class _HomeState extends State<Home> {
       });
     }
     print(isAuth);
+  }
+
+  checkUserInFirestore() async {
+    final GoogleSignInAccount user = googleSignIn.currentUser;
+    final DocumentSnapshot doc = await usersRef.document(user.id).get();
+    if (!doc.exists) {
+      final username = await Navigator.push(
+          context, MaterialPageRoute(builder: (context) => CreateAccount()));
+
+      usersRef.document(user.id).setData({
+        "id": user.id,
+        "username": username,
+        "photoUrl": user.photoUrl,
+        "email": user.email,
+        "displayname": user.displayName,
+        "bio": "",
+        "timestamp": timeStamp
+      });
+    }
   }
 
   loginWithGoogle() {
@@ -86,7 +111,17 @@ class _HomeState extends State<Home> {
   Scaffold buildAuthScreen() {
     return Scaffold(
       body: PageView(
-        children: [Timeline(), ActivityFeed(), Upload(), Search(), Profile()],
+        children: [
+          //Timeline(),
+          RaisedButton(
+            onPressed: logout,
+            child: Text("logout"),
+          ),
+          ActivityFeed(),
+          Upload(),
+          Search(),
+          Profile(),
+        ],
         controller: pageController,
         onPageChanged: changePageToIndex,
         physics: NeverScrollableScrollPhysics(),
