@@ -32,7 +32,7 @@ class _HomeState extends State<Home> {
               'Flluttershare',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white70,
+                color: Colors.white,
                 fontFamily: "Signatra",
                 fontSize: 90.0,
               ),
