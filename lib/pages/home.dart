@@ -1,6 +1,10 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttershare/pages/activity_feed.dart';
+import 'package:fluttershare/pages/profile.dart';
+import 'package:fluttershare/pages/search.dart';
+import 'package:fluttershare/pages/timeline.dart';
+import 'package:fluttershare/pages/upload.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 final GoogleSignIn googleSignIn = GoogleSignIn();
@@ -12,16 +16,26 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   bool isAuth = false;
+  int pageIndex = 0;
+  PageController pageController;
 
   @override
   void initState() {
-    // TODO: implement initState
-    super.initState();
+    pageController = PageController();
+
     googleSignIn.onCurrentUserChanged.listen(checkAuth, onError: errorOccured);
     googleSignIn
         .signInSilently(suppressErrors: false)
         .then(checkAuth)
         .catchError(errorOccured);
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -55,10 +69,44 @@ class _HomeState extends State<Home> {
     googleSignIn.signOut();
   }
 
-  Widget buildAuthScreen() {
-    return RaisedButton(
-      child: Text('SignOut'),
-      onPressed: logout,
+  changePageToIndex(int index) {
+    setState(() {
+      this.pageIndex = index;
+    });
+  }
+
+  onTap(int index) {
+    pageController.animateToPage(
+      index,
+      duration: Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  Scaffold buildAuthScreen() {
+    return Scaffold(
+      body: PageView(
+        children: [Timeline(), ActivityFeed(), Upload(), Search(), Profile()],
+        controller: pageController,
+        onPageChanged: changePageToIndex,
+        physics: NeverScrollableScrollPhysics(),
+      ),
+      bottomNavigationBar: CupertinoTabBar(
+        currentIndex: pageIndex,
+        onTap: onTap,
+        activeColor: Theme.of(context).primaryColor,
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.whatshot)),
+          BottomNavigationBarItem(icon: Icon(Icons.notifications_active)),
+          BottomNavigationBarItem(
+              icon: Icon(
+            Icons.photo_camera,
+            size: 35.0,
+          )),
+          BottomNavigationBarItem(icon: Icon(Icons.search)),
+          BottomNavigationBarItem(icon: Icon(Icons.account_circle)),
+        ],
+      ),
     );
   }
 
