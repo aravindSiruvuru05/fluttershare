@@ -31,10 +31,15 @@ dependencies:
   firebase_core: ^0.4.5
   firebase_auth: ^0.16.1
   cloud_firestore: ^0.13.7
+  firebase_storage: ^3.0.0
   google_sign_in: ^4.5.1
   flutter_svg: ^0.18.0
   cached_network_image: ^2.2.0+1
   image_picker: ^0.6.7+4
+  path_provider: ^1.6.11
+  image: ^2.1.14
+  uuid: ^2.2.0
+
 
 dev_dependencies:
   flutter_test:
