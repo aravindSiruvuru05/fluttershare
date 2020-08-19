@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:fluttershare/models/user.dart';
 import 'package:fluttershare/pages/home.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:path_provider/path_provider.dart';
@@ -24,7 +25,9 @@ class Upload extends StatefulWidget {
 }
 
 class _UploadState extends State<Upload> {
-  String urll = "";
+  TextEditingController locationController = TextEditingController();
+  TextEditingController captionController = TextEditingController();
+
   File _image;
   bool _isUploading = false;
   String postId = Uuid().v4();
@@ -68,16 +71,40 @@ class _UploadState extends State<Upload> {
     });
   }
 
+  createPostInFirestore({mediaUrl, location, description}) {
+    postsRef
+        .document(widget.currentUser.id)
+        .collection("userPosts")
+        .document(postId)
+        .setData({
+      "postId": postId,
+      "ownerId": widget.currentUser.id,
+      "username": widget.currentUser.displayname,
+      "mediaUrl": mediaUrl,
+      "description": description,
+      "location": location,
+      "timestamp": timeStamp,
+      "likes": {}
+    });
+  }
+
   handlePost() async {
     setState(() {
       _isUploading = true;
     });
     compressImage();
     String mediaUrl = await uploadPhoto(_image);
+    createPostInFirestore(
+      mediaUrl: mediaUrl,
+      location: locationController.text,
+      description: captionController.text,
+    );
+    captionController.clear();
+    locationController.clear();
     setState(() {
-      urll = mediaUrl;
+      _image = null;
+      _isUploading = false;
     });
-    _isUploading = false;
   }
 
   selectImage(BuildContext context) {
@@ -115,17 +142,18 @@ class _UploadState extends State<Upload> {
             height: 260.0,
           ),
           RaisedButton(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            color: Colors.deepOrange,
+            child: Text(
+              "Upload Image",
+              style: TextStyle(
+                color: Colors.white,
               ),
-              color: Colors.deepOrange,
-              child: Text(
-                "Upload Image",
-                style: TextStyle(
-                  color: Colors.white,
-                ),
-              ),
-              onPressed: () => selectImage(context))
+            ),
+            onPressed: () => selectImage(context),
+          )
         ],
       ),
     );
@@ -192,6 +220,7 @@ class _UploadState extends State<Upload> {
                 backgroundColor: Colors.grey,
               ),
               title: TextFormField(
+                controller: captionController,
                 decoration: InputDecoration(
                     hintText: "write a caption", border: InputBorder.none),
               ),
@@ -203,6 +232,7 @@ class _UploadState extends State<Upload> {
             title: Container(
               width: 250,
               child: TextField(
+                controller: locationController,
                 decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: "where is this photo taken"),
@@ -214,24 +244,36 @@ class _UploadState extends State<Upload> {
             height: 100,
             alignment: Alignment.center,
             child: RaisedButton.icon(
-              onPressed: () => print("cureenet location"),
+              onPressed: getLocation,
               icon: Icon(
-                Icons.location_on,
+                Icons.my_location,
                 color: Colors.white,
               ),
               label: Text(
                 "get current location",
+                style: TextStyle(color: Colors.white),
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.0),
               ),
-              color: Colors.blueAccent.withOpacity(0.6),
+              color: Theme.of(context).primaryColor,
             ),
           ),
-          Text(urll)
         ],
       ),
     );
+  }
+
+  getLocation() async {
+    print("fsgd");
+    Position position = await Geolocator()
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    List<Placemark> placemarks = await Geolocator()
+        .placemarkFromCoordinates(position.latitude, position.longitude);
+    Placemark placemark = placemarks[0];
+    print(placemark.country);
+    String formattedAddress = "${placemark.locality}, ${placemark.country}";
+    locationController.text = formattedAddress;
   }
 
   @override

@@ -56,6 +56,8 @@
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>you need to provide permission for camera</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>you will need to allow permissions </string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>becauseyou should</string>
 </dict>
