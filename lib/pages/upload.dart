@@ -271,9 +271,12 @@ class _UploadState extends State<Upload> {
     List<Placemark> placemarks = await Geolocator()
         .placemarkFromCoordinates(position.latitude, position.longitude);
     Placemark placemark = placemarks[0];
+
     print(placemark.country);
     String formattedAddress = "${placemark.locality}, ${placemark.country}";
-    locationController.text = formattedAddress;
+    setState(() {
+      locationController.text = formattedAddress;
+    });
   }
 
   @override

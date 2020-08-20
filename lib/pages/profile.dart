@@ -1,9 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttershare/models/user.dart';
 import 'package:fluttershare/pages/edit_profile.dart';
 import 'package:fluttershare/pages/home.dart';
 import 'package:fluttershare/widgets/header.dart';
+import 'package:fluttershare/widgets/post.dart';
 import 'package:fluttershare/widgets/progress.dart';
 
 class Profile extends StatefulWidget {
@@ -16,6 +18,33 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
+  bool isLoading = false;
+  int postCount = 0;
+  List<Post> posts = [];
+
+  getProfilePosts() async {
+    setState(() {
+      isLoading = true;
+    });
+    print(widget.profileId);
+    final userPostsRef =
+        await postsRef.document(widget.profileId).collection("userPosts");
+    QuerySnapshot snapshot = await userPostsRef.getDocuments();
+
+    print(snapshot.documents.length);
+    setState(() {
+      isLoading = false;
+      postCount = snapshot.documents.length;
+      posts = snapshot.documents.map((e) => Post.fromDocument(e)).toList();
+    });
+  }
+
+  @override
+  void initState() {
+    getProfilePosts();
+    super.initState();
+  }
+
   buildCountColumn(label, value) {
     return Container(
       child: Padding(
@@ -101,7 +130,7 @@ class _ProfileState extends State<Profile> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             buildCountColumn("Followers", "20"),
-                            buildCountColumn("Posts", "20"),
+                            buildCountColumn("Posts", postCount.toString()),
                             buildCountColumn("Following", "20"),
                           ],
                         ),
@@ -159,6 +188,7 @@ class _ProfileState extends State<Profile> {
         children: [
           buildProfileHeader(),
           Divider(),
+          isLoading ? circularProgress() : Column(children: posts),
         ],
       ),
     );
