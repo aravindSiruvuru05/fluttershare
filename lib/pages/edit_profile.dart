@@ -73,6 +73,7 @@ class _EditProfileState extends State<EditProfile> {
 
   logoutHandle() {
     googleSignIn.signOut();
+    print(googleSignIn.currentUser.email);
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => Home()),
