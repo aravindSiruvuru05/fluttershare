@@ -38,13 +38,20 @@ class _ProfileState extends State<Profile> {
     );
   }
 
-  handleEditProfile() {
-    Navigator.push(
+  handleEditProfile() async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => EditProfile(currentUserId: currentUser.id),
       ),
     );
+    if (result != null) {
+      Scaffold.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text("$result")));
+    } else {
+      Scaffold.of(context)..removeCurrentSnackBar();
+    }
   }
 
   buildEditProfileButton() {
@@ -131,7 +138,7 @@ class _ProfileState extends State<Profile> {
                 child: Container(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    "user bio comes here",
+                    user.bio,
                     style: TextStyle(
                         fontWeight: FontWeight.normal, fontSize: 15.0),
                   ),
